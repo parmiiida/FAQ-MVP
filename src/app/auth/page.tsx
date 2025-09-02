@@ -114,39 +114,47 @@ const Auth = () => {
             {isLogin ? 'Sign in to your account' : 'Create your account'}
           </CardDescription>
         </CardHeader>
-        <CardContent className="pt-0">
-  {editingFAQId === faq.id ? (
-    <div className="space-y-2">
-      <Input
-        value={editingQuestion}
-        onChange={(e) => setEditingQuestion(e.target.value)}
-        className="text-sm"
-      />
-      <textarea
-        value={editingAnswer}
-        onChange={(e) => setEditingAnswer(e.target.value)}
-        className="w-full min-h-[60px] p-2 text-sm border rounded-md resize-none"
-      />
-      <div className="flex gap-2">
-        <Button size="sm" onClick={() => handleSaveFAQ(faq.id)}>
-          Save
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => setEditingFAQId(null)}
-        >
-          Cancel
-        </Button>
-      </div>
-    </div>
-  ) : (
-    <CardDescription className="text-xs leading-relaxed">
-      {faq.answer}
-    </CardDescription>
-  )}
-</CardContent>
+        <CardContent>
+          <form onSubmit={handleSubmit}>
+            <div ref={formRef} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isLogin ? 'Login' : 'Sign Up'}
+              </Button>
+            </div>
+          </form>
 
+          <div className="mt-6 text-center">
+            <button
+              onClick={handleModeSwitch}
+              className="text-sm text-muted-foreground hover:text-primary transition-colors"
+            >
+              {isLogin ? "Don't have an account? Sign up" : "Already have an account? Login"}
+            </button>
+          </div>
+        </CardContent>
       </Card>
     </div>
   );

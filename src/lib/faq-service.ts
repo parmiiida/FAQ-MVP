@@ -56,6 +56,8 @@ export class FAQService {
   }
 
   static async addFAQ(faq: FAQInsert): Promise<FAQ> {
+
+
     try {
       console.log('Attempting to add FAQ:', faq);
 

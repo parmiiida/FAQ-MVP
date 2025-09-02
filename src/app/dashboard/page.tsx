@@ -1,22 +1,24 @@
 'use client'
-import React, { useState, useRef, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Header } from '@/components/Header';
-import { ChatArea } from '@/components/ChatArea';
-import { KnowledgeBaseSidebar } from '@/components/KnowledgeBaseSidebar';
-import { Sidebar, SidebarContent, SidebarProvider } from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
-import { PanelLeft } from 'lucide-react';
-import { gsap } from 'gsap';
+import React, { useState, useRef, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Header } from "@/components/Header";
+import { ChatArea } from "@/components/ChatArea";
+import { EnhancedKnowledgeBaseSidebar } from "@/components/EnhancedKnowledgeBaseSidebar";
+import { Button } from "@/components/ui/button";
+import { PanelLeft } from "lucide-react";
+import { gsap } from "gsap";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Dashboard = () => {
   const { user, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
   const dashboardRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!loading && !user) {
-      window.location.href = '/auth';
+      window.location.href = "/auth";
     }
   }, [user, loading]);
 
@@ -27,7 +29,7 @@ const Dashboard = () => {
       gsap.to(dashboardRef.current, {
         opacity: 1,
         duration: 0.5,
-        ease: 'power2.out'
+        ease: "power2.out",
       });
     }
   }, []);
@@ -48,21 +50,46 @@ const Dashboard = () => {
   }
 
   return (
-    <SidebarProvider>
-      <div ref={dashboardRef} className="min-h-screen flex w-full bg-background">
-        {/* Mobile KB Sidebar */}
-        <Sidebar className={`fixed inset-y-0 left-0 z-50 w-80 transform transition-transform lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-          <SidebarContent>
-            <KnowledgeBaseSidebar onClose={() => setSidebarOpen(false)} />
-          </SidebarContent>
-        </Sidebar>
+    <div ref={dashboardRef} className="min-h-screen flex w-full bg-background">
+      {/* Mobile KB Sidebar */}
+      {isMobile && (
+        <>
+          <div
+            className={`fixed inset-y-0 left-0 z-50 w-80 bg-background border-r transform transition-transform duration-300 ease-in-out ${
+              sidebarOpen ? "translate-x-0" : "-translate-x-full"
+            }`}
+          >
+            <EnhancedKnowledgeBaseSidebar
+              onClose={() => setSidebarOpen(false)}
+            />
+          </div>
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col">
-          <Header />
+          {/* Mobile overlay */}
+          {sidebarOpen && (
+            <div
+              className="fixed inset-0 bg-black/50 z-40"
+              onClick={() => setSidebarOpen(false)}
+            />
+          )}
+        </>
+      )}
 
-          {/* Mobile KB Toggle */}
-          <div className="lg:hidden p-4 border-b">
+      {/* Desktop KB Sidebar */}
+      {!isMobile && desktopSidebarOpen && (
+        <div className="w-80 border-r bg-muted/5 flex-shrink-0">
+          <EnhancedKnowledgeBaseSidebar
+            onClose={() => setDesktopSidebarOpen(false)}
+          />
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col">
+        <Header />
+
+        {/* Mobile KB Toggle */}
+        {isMobile && (
+          <div className="p-4 border-b">
             <Button
               variant="outline"
               size="sm"
@@ -73,27 +100,29 @@ const Dashboard = () => {
               Knowledge Base
             </Button>
           </div>
-
-          {/* Chat Area */}
-          <div className="flex-1 flex">
-            <ChatArea />
-
-            {/* Desktop KB Sidebar */}
-            <div className="hidden lg:block w-80 border-l bg-muted/5">
-              <KnowledgeBaseSidebar />
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile overlay */}
-        {sidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
         )}
+
+        {/* Desktop KB Toggle */}
+        {!isMobile && !desktopSidebarOpen && (
+          <div className="p-4 border-b">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setDesktopSidebarOpen(true)}
+              className="flex items-center gap-2"
+            >
+              <PanelLeft className="h-4 w-4" />
+              Show Knowledge Base
+            </Button>
+          </div>
+        )}
+
+        {/* Chat Area */}
+        <div className="flex-1">
+          <ChatArea />
+        </div>
       </div>
-    </SidebarProvider>
+    </div>
   );
 };
 

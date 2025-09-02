@@ -11,52 +11,98 @@ export interface Database {
     Tables: {
       faqs: {
         Row: {
-          id: string
-          question: string
-          answer: string
-          user_id: string
-          created_at: string
-          updated_at: string
-        }
+          id: string;
+          question: string;
+          answer: string;
+          user_id: string;
+          category_id: string | null;
+          tags: string[] | null;
+          is_visible: boolean | null;
+          sort_order: number | null;
+          rich_answer: Json | null;
+          created_at: string;
+          updated_at: string;
+        };
         Insert: {
-          id?: string
-          question: string
-          answer: string
-          user_id: string
-          created_at?: string
-          updated_at?: string
-        }
+          id?: string;
+  question: string;
+  answer: string;
+  user_id: string;
+  created_at?: string;
+  updated_at?: string;
+  category_id?: string | null;
+  tags?: string[] | null;
+  is_visible?: boolean | null;
+  sort_order?: number | null;
+  rich_answer?: Json | null;
+        };
         Update: {
-          id?: string
-          question?: string
-          answer?: string
-          user_id?: string
-          created_at?: string
-          updated_at?: string
-        }
-      }
-    }
+          id?: string;
+          question?: string;
+          answer?: string;
+          user_id?: string;
+          category_id?: string | null;
+          tags?: string[] | null;
+          is_visible?: boolean | null;
+          sort_order?: number | null;
+          rich_answer?: Json | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+
+      faq_categories: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          description: string | null;
+          color: string | null;
+          sort_order: number | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          description?: string | null;
+          color?: string | null;
+          sort_order?: number | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          name?: string;
+          description?: string | null;
+          color?: string | null;
+          sort_order?: number | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+      };
+
+    };
     Views: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Functions: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Enums: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     CompositeTypes: {
-      [_ in never]: never
-    }
-  }
+      [_ in never]: never;
+    };
+  };
 }
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<
-  keyof Database,
-  "public"
->];
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends

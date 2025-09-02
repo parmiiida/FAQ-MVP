@@ -44,8 +44,8 @@ export const KnowledgeBaseSidebar: React.FC<KnowledgeBaseSidebarProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [editingFAQId, setEditingFAQId] = useState<string | null>(null);
-const [editingQuestion, setEditingQuestion] = useState("");
-const [editingAnswer, setEditingAnswer] = useState("");
+  const [editingQuestion, setEditingQuestion] = useState("");
+  const [editingAnswer, setEditingAnswer] = useState("");
 
   const sidebarRef = useRef<HTMLDivElement>(null);
   const faqRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -65,9 +65,7 @@ const [editingAnswer, setEditingAnswer] = useState("");
         answer: editingAnswer,
       });
 
-      setFaqs((prev) =>
-        prev.map((faq) => (faq.id === id ? updatedFAQ : faq))
-      );
+      setFaqs((prev) => prev.map((faq) => (faq.id === id ? updatedFAQ : faq)));
 
       toast({
         title: "Success",
@@ -96,7 +94,6 @@ const [editingAnswer, setEditingAnswer] = useState("");
       });
     }
   }, []);
-
 
   useEffect(() => {
     if (user) {
@@ -208,7 +205,7 @@ const [editingAnswer, setEditingAnswer] = useState("");
           <p className="text-sm text-muted-foreground">Manage your FAQs</p>
         </div>
         {onClose && (
-          <Button variant="ghost" size="icon" onClick={onClose}>
+          <Button variant="ghost" size="icon" onClick={onClose} className="lg:hidden block">
             <X className="h-4 w-4" />
           </Button>
         )}
@@ -274,7 +271,7 @@ const [editingAnswer, setEditingAnswer] = useState("");
                     Adding...
                   </>
                 ) : (
-                  'Add'
+                  "Add"
                 )}
               </Button>
               <Button
@@ -319,14 +316,14 @@ const [editingAnswer, setEditingAnswer] = useState("");
                       {faq.question}
                     </CardTitle>
                     <div className="flex gap-1">
-                    <Button
-  variant="ghost"
-  size="icon"
-  className="h-6 w-6"
-  onClick={() => startEditingFAQ(faq)}
->
-  <Edit className="h-3 w-3" />
-</Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => startEditingFAQ(faq)}
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -339,38 +336,37 @@ const [editingAnswer, setEditingAnswer] = useState("");
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0">
-  {editingFAQId === faq.id ? (
-    <div className="space-y-2">
-      <Input
-        value={editingQuestion}
-        onChange={(e) => setEditingQuestion(e.target.value)}
-        className="text-sm"
-      />
-      <textarea
-        value={editingAnswer}
-        onChange={(e) => setEditingAnswer(e.target.value)}
-        className="w-full min-h-[60px] p-2 text-sm border rounded-md resize-none"
-      />
-      <div className="flex gap-2">
-        <Button size="sm" onClick={() => handleSaveFAQ(faq.id)}>
-          Save
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => setEditingFAQId(null)}
-        >
-          Cancel
-        </Button>
-      </div>
-    </div>
-  ) : (
-    <CardDescription className="text-xs leading-relaxed">
-      {faq.answer}
-    </CardDescription>
-  )}
-</CardContent>
-
+                  {editingFAQId === faq.id ? (
+                    <div className="space-y-2">
+                      <Input
+                        value={editingQuestion}
+                        onChange={(e) => setEditingQuestion(e.target.value)}
+                        className="text-sm"
+                      />
+                      <textarea
+                        value={editingAnswer}
+                        onChange={(e) => setEditingAnswer(e.target.value)}
+                        className="w-full min-h-[60px] p-2 text-sm border rounded-md resize-none"
+                      />
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => handleSaveFAQ(faq.id)}>
+                          Save
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingFAQId(null)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <CardDescription className="text-xs leading-relaxed">
+                      {faq.answer}
+                    </CardDescription>
+                  )}
+                </CardContent>
               </Card>
             ))
           )}
