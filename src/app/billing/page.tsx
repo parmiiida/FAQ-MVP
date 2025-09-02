@@ -82,9 +82,11 @@ const Billing = () => {
         .order('sort_order');
 
       if (plansError) throw plansError;
-      const transformedPlans = (plansData || []).map((plan: any) => ({
-        ...plan,
-        features: Array.isArray(plan.features) ? plan.features.map((f: any) => String(f)) : []
+      const transformedPlans: SubscriptionPlan[] = (plansData || []).map((plan) => ({
+        ...(plan as SubscriptionPlan),
+        features: Array.isArray((plan as SubscriptionPlan).features)
+          ? ((plan as SubscriptionPlan).features).map((f) => String(f))
+          : []
       }));
       setPlans(transformedPlans);
 
@@ -103,12 +105,19 @@ const Billing = () => {
       }
 
       if (subscriptionData) {
-        const transformedSubscription = {
-          ...(subscriptionData as any),
-          plan: {
-            ...(subscriptionData as any).plan,
-            features: Array.isArray((subscriptionData as any).plan.features) ? (subscriptionData as any).plan.features.map((f: any) => String(f)) : []
-          }
+        type SubscriptionRow = UserSubscription & { plan: SubscriptionPlan };
+        const sub = subscriptionData as unknown as SubscriptionRow;
+
+        const typedPlan: SubscriptionPlan = {
+          ...sub.plan,
+          features: Array.isArray(sub.plan.features)
+            ? sub.plan.features.map((f) => String(f))
+            : []
+        };
+
+        const transformedSubscription: UserSubscription = {
+          ...sub,
+          plan: typedPlan,
         };
         setCurrentSubscription(transformedSubscription);
       } else {
