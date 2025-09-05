@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,7 +18,6 @@ import {
   ArrowUpDown,
   HelpCircle,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import gsap from "gsap";
 
 const ManageFAQs = () => {
@@ -79,7 +79,8 @@ const ManageFAQs = () => {
     const matchesSearch =
       faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
       faq.answer.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === "all" || faq.category === selectedCategory;
+    const matchesCategory =
+      selectedCategory === "all" || faq.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -110,7 +111,10 @@ const ManageFAQs = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => router.push("/dashboard/faqs/categories")}>
+          <Button
+            variant="outline"
+            onClick={() => router.push("/dashboard/faqs/categories")}
+          >
             <Filter className="h-4 w-4 mr-2" />
             Categories
           </Button>
@@ -186,7 +190,9 @@ const ManageFAQs = () => {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <CardTitle className="text-lg">{faq.question}</CardTitle>
-                    <CardDescription className="mt-2 line-clamp-2">{faq.answer}</CardDescription>
+                    <CardDescription className="mt-2 line-clamp-2">
+                      {faq.answer}
+                    </CardDescription>
                   </div>
                   <div className="flex items-center gap-2 ml-4">
                     {faq.isVisible ? (
@@ -215,7 +221,11 @@ const ManageFAQs = () => {
                       <Edit className="h-4 w-4" />
                     </Button>
                     <Button variant="ghost" size="sm">
-                      {faq.isVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {faq.isVisible ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
                     </Button>
                     <Button
                       variant="ghost"

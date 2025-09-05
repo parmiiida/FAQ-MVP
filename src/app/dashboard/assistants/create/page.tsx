@@ -4,59 +4,69 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Bot, ArrowLeft, Sparkles, X } from 'lucide-react';
+import { Bot, ArrowLeft, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
-const predefinedTags = [
-  'customer-service', 'support', 'sales', 'products', 'faq', 'general',
-  'technical', 'billing', 'onboarding', 'recommendations'
-];
 
 export default function AssistantCreate() {
   const router = useRouter();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [personality, setPersonality] = useState('');
-  const [tags, setTags] = useState<string[]>([]);
-  const [customTag, setCustomTag] = useState('');
+  const [tone, setTone] = useState('friendly');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Mock API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    if (!user?.id) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to create an assistant",
+        variant: "destructive"
+      });
+      setIsLoading(false);
+      return;
+    }
 
-    toast({
-      title: "Assistant created!",
-      description: `${name} has been created successfully.`,
-    });
+    try {
+      const { error } = await supabase
+        .from('assistants')
+        .insert({
+          name,
+          description,
+          personality,
+          tone,
+          is_active: true,
+          user_id: user.id
+        });
 
-    setIsLoading(false);
-    router.push('/dashboard/assistants');
-  };
+      if (error) throw error;
 
-  const addTag = (tag: string) => {
-    if (!tags.includes(tag)) {
-      setTags([...tags, tag]);
+      toast({
+        title: "Assistant created!",
+        description: `${name} has been created successfully.`,
+      });
+
+      router.push('/dashboard/assistants');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create assistant",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const removeTag = (tag: string) => {
-    setTags(tags.filter(t => t !== tag));
-  };
-
-  const handleAddCustomTag = () => {
-    if (customTag.trim() && !tags.includes(customTag.trim())) {
-      setTags([...tags, customTag.trim()]);
-      setCustomTag('');
-    }
-  };
 
   return (
     <div>
@@ -118,7 +128,22 @@ export default function AssistantCreate() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="personality">Personality & Tone</Label>
+                    <Label htmlFor="tone">Tone</Label>
+                    <select
+                      id="tone"
+                      value={tone}
+                      onChange={(e) => setTone(e.target.value)}
+                      className="w-full px-3 py-2 border border-input bg-background rounded-md"
+                    >
+                      <option value="friendly">Friendly</option>
+                      <option value="professional">Professional</option>
+                      <option value="casual">Casual</option>
+                      <option value="formal">Formal</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="personality">Personality & Behavior</Label>
                     <Textarea
                       id="personality"
                       placeholder="Describe the assistant's personality, tone, and communication style..."
@@ -131,67 +156,6 @@ export default function AssistantCreate() {
                     </p>
                   </div>
 
-                  {/* Tags */}
-                  <div className="space-y-3">
-                    <Label>Tags</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Add tags to categorize and organize your assistant
-                    </p>
-
-                    {/* Selected tags */}
-                    {tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {tags.map((tag) => (
-                          <Badge key={tag} variant="secondary" className="pr-1">
-                            {tag}
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="h-auto p-1 ml-1 hover:bg-transparent"
-                              onClick={() => removeTag(tag)}
-                            >
-                              <X className="w-3 h-3" />
-                            </Button>
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Predefined tags */}
-                    <div className="flex flex-wrap gap-2">
-                      {predefinedTags.filter(tag => !tags.includes(tag)).map((tag) => (
-                        <Button
-                          key={tag}
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => addTag(tag)}
-                          className="text-xs"
-                        >
-                          + {tag}
-                        </Button>
-                      ))}
-                    </div>
-
-                    {/* Custom tag input */}
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Add custom tag..."
-                        value={customTag}
-                        onChange={(e) => setCustomTag(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddCustomTag())}
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleAddCustomTag}
-                        disabled={!customTag.trim()}
-                      >
-                        Add
-                      </Button>
-                    </div>
-                  </div>
 
                   <div className="flex gap-3 pt-6">
                     <Button
@@ -242,15 +206,6 @@ export default function AssistantCreate() {
                     </div>
                   </div>
 
-                  {tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {tags.map((tag) => (
-                        <Badge key={tag} variant="outline" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
 
                   {personality && (
                     <div className="p-3 bg-muted/50 rounded-lg">

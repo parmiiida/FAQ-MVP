@@ -7,12 +7,52 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bot, User, Send, ArrowLeft, Download, History, Code, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useState, use } from "react";
+import React, { useState, use, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
-const mockMessages = [
-  { id: "1", role: "assistant" as const, content: "Hello! I'm your Customer Support Bot. How can I help you today?", timestamp: Date.now() - 300000 },
-  { id: "2", role: "user" as const, content: "How do I reset my password?", timestamp: Date.now() - 240000 },
-  { id: "3", role: "assistant" as const, content: 'To reset your password, click on the "Forgot Password" link on the login page and follow the instructions sent to your email.', timestamp: Date.now() - 180000 },
+type Message = {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  created_at: string;
+  assistant_id: string;
+  user_id: string | null;
+};
+
+type Assistant = {
+  id: string;
+  name: string;
+  personality: string | null;
+  tone: string | null;
+};
+
+const mockMessages: Message[] = [
+  {
+    id: "1",
+    role: "assistant" as const,
+    content: "Hello! I'm your Customer Support Bot. How can I help you today?",
+    created_at: new Date(Date.now() - 300000).toISOString(),
+    assistant_id: "mock",
+    user_id: "mock"
+  },
+  {
+    id: "2",
+    role: "user" as const,
+    content: "How do I reset my password?",
+    created_at: new Date(Date.now() - 240000).toISOString(),
+    assistant_id: "mock",
+    user_id: "mock"
+  },
+  {
+    id: "3",
+    role: "assistant" as const,
+    content: 'To reset your password, click on the "Forgot Password" link on the login page and follow the instructions sent to your email.',
+    created_at: new Date(Date.now() - 180000).toISOString(),
+    assistant_id: "mock",
+    user_id: "mock"
+  },
 ];
 
 const mockConversationLogs = [
@@ -25,37 +65,141 @@ const mockConversationLogs = [
 export default function AssistantChatPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id } = use(params);
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState(mockMessages);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [activeTab, setActiveTab] = useState("chat");
+  const [assistant, setAssistant] = useState<Assistant | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
 
-  const handleSend = () => {
-    if (!message.trim()) return;
+  useEffect(() => {
+    if (user?.id) {
+      fetchAssistant();
+      fetchMessages();
+    }
+  }, [id, user?.id]);
 
-    const newMessage = {
-      id: Date.now().toString(),
-      role: "user" as const,
-      content: message,
-      timestamp: Date.now(),
-    };
+  const fetchAssistant = async () => {
+    if (!user?.id) return;
 
-    setMessages((prev) => [...prev, newMessage]);
+    try {
+      const { data, error } = await supabase
+        .from('assistants')
+        .select('*')
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) throw error;
+      setAssistant(data);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load assistant",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const fetchMessages = async () => {
+    try {
+      // For now, use mock messages since chat_logs stores JSON
+      // In a real implementation, you'd parse the JSON messages from chat_logs
+      setMessages(mockMessages);
+    } catch (error) {
+      console.error('Failed to fetch messages:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSend = async () => {
+    if (!message.trim() || sending) return;
+
+    setSending(true);
+    const userMessage = message;
     setMessage("");
 
-    setTimeout(() => {
-      const aiResponse = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant" as const,
-        content: "Thank you for your question! This is a mock response from your AI assistant.",
-        timestamp: Date.now(),
+    if (!user?.id) return;
+
+    try {
+      // Create new message objects for UI
+      const userMsg: Message = {
+        id: Date.now().toString(),
+        role: 'user',
+        content: userMessage,
+        created_at: new Date().toISOString(),
+        assistant_id: id,
+        user_id: user.id
       };
-      setMessages((prev) => [...prev, aiResponse]);
-    }, 1000);
+
+      setMessages((prev) => [...prev, userMsg]);
+
+      // Get FAQs for context
+      const { data: faqs } = await supabase
+        .from('faqs')
+        .select('*')
+        .eq('assistant_id', id)
+        .eq('is_visible', true);
+
+      // Call AI function
+      const response = await fetch('/api/supabase/functions/chat-with-ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMessage,
+          assistantId: id,
+          faqs: faqs || [],
+          context: {
+            personality: assistant?.personality,
+            tone: assistant?.tone
+          }
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to get AI response');
+
+      const { response: aiResponse } = await response.json();
+
+      // Create AI response message for UI
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: aiResponse,
+        created_at: new Date().toISOString(),
+        assistant_id: id,
+        user_id: user.id
+      };
+
+      setMessages((prev) => [...prev, aiMsg]);
+
+      // Log analytics
+      await supabase
+        .from('analytics')
+        .insert({
+          user_id: user.id,
+          assistant_id: id,
+          event_type: 'chat_message',
+          event_data: { message_count: messages.length + 2 }
+        });
+
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send message",
+        variant: "destructive"
+      });
+      setMessage(userMessage); // Restore message on error
+    } finally {
+      setSending(false);
+    }
   };
 
   const exportChatLogs = () => {
     const chatData = {
-      assistant: "Customer Support Bot",
+      assistant: assistant?.name || "Assistant",
       date: new Date().toISOString(),
       messages: messages,
     };
@@ -69,6 +213,10 @@ export default function AssistantChatPage({ params }: { params: Promise<{ id: st
     link.click();
     URL.revokeObjectURL(url);
   };
+
+  if (loading) {
+    return <div className="p-8">Loading chat...</div>;
+  }
 
   return (
     <div>
@@ -85,7 +233,7 @@ export default function AssistantChatPage({ params }: { params: Promise<{ id: st
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Test Chat</h1>
-            <p className="text-muted-foreground">Assistant ID: {id}</p>
+            <p className="text-muted-foreground">{assistant?.name || `Assistant ID: ${id}`}</p>
           </div>
         </div>
 
@@ -116,23 +264,30 @@ export default function AssistantChatPage({ params }: { params: Promise<{ id: st
               <CardContent className="flex-1 flex flex-col p-0">
                 <ScrollArea className="flex-1 p-4">
                   <div className="space-y-4">
-                    {messages.map((msg) => (
-                      <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                        <div className={`flex items-start space-x-2 max-w-[80%] ${msg.role === "user" ? "flex-row-reverse space-x-reverse" : ""}`}>
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${msg.role === "user" ? "bg-primary" : "bg-gradient-primary"}`}>
-                            {msg.role === "user" ? (
-                              <User className="w-4 h-4 text-white" />
-                            ) : (
-                              <Bot className="w-4 h-4 text-white" />
-                            )}
-                          </div>
-                          <div className={`rounded-lg p-3 ${msg.role === "user" ? "bg-primary text-white" : "bg-muted"}`}>
-                            <p className="text-sm">{msg.content}</p>
-                            <p className="text-xs opacity-70 mt-1">{new Date(msg.timestamp).toLocaleTimeString()}</p>
+                    {messages.length === 0 ? (
+                      <div className="text-center py-8">
+                        <Bot className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-muted-foreground">Start a conversation with your assistant</p>
+                      </div>
+                    ) : (
+                      messages.map((msg) => (
+                        <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                          <div className={`flex items-start space-x-2 max-w-[80%] ${msg.role === "user" ? "flex-row-reverse space-x-reverse" : ""}`}>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${msg.role === "user" ? "bg-primary" : "bg-gradient-primary"}`}>
+                              {msg.role === "user" ? (
+                                <User className="w-4 h-4 text-white" />
+                              ) : (
+                                <Bot className="w-4 h-4 text-white" />
+                              )}
+                            </div>
+                            <div className={`rounded-lg p-3 ${msg.role === "user" ? "bg-primary text-white" : "bg-muted"}`}>
+                              <p className="text-sm">{msg.content}</p>
+                              <p className="text-xs opacity-70 mt-1">{new Date(msg.created_at).toLocaleTimeString()}</p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </ScrollArea>
 
@@ -145,7 +300,11 @@ export default function AssistantChatPage({ params }: { params: Promise<{ id: st
                       onKeyPress={(e) => e.key === "Enter" && handleSend()}
                       className="flex-1"
                     />
-                    <Button onClick={handleSend} className="bg-gradient-primary hover:opacity-90">
+                    <Button
+                      onClick={handleSend}
+                      disabled={sending || !message.trim()}
+                      className="bg-gradient-primary hover:opacity-90"
+                    >
                       <Send className="w-4 h-4" />
                     </Button>
                   </div>

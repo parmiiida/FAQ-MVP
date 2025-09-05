@@ -1,9 +1,11 @@
 // app/dashboard/assistants/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 import {
   Card,
@@ -25,6 +27,7 @@ import {
   Play,
   Trash2,
   Edit,
+  RefreshCw,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -33,68 +36,110 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const mockAssistants = [
-  {
-    id: "1",
-    name: "Customer Support Bot",
-    description:
-      "Handles customer inquiries and provides support across multiple channels",
-    status: "active",
-    totalChats: 145,
-    totalMessages: 892,
-    lastUsed: "2 hours ago",
-    createdAt: "2024-01-15",
-    tags: ["customer-service", "support"],
-  },
-  {
-    id: "2",
-    name: "Product Helper",
-    description: "Provides detailed product information and recommendations",
-    status: "active",
-    totalChats: 28,
-    totalMessages: 156,
-    lastUsed: "5 hours ago",
-    createdAt: "2024-01-20",
-    tags: ["products", "recommendations"],
-  },
-  {
-    id: "3",
-    name: "FAQ Assistant",
-    description: "Answers frequently asked questions about our services",
-    status: "inactive",
-    totalChats: 72,
-    totalMessages: 234,
-    lastUsed: "1 day ago",
-    createdAt: "2024-01-10",
-    tags: ["faq", "general"],
-  },
-  {
-    id: "4",
-    name: "Sales Assistant",
-    description: "Helps with sales inquiries and lead qualification",
-    status: "active",
-    totalChats: 89,
-    totalMessages: 445,
-    lastUsed: "4 hours ago",
-    createdAt: "2024-01-25",
-    tags: ["sales", "leads"],
-  },
-];
+type Assistant = {
+  id: string;
+  name: string;
+  description: string | null;
+  is_active: boolean | null;
+  total_chats?: number;
+  created_at: string;
+  tone?: string | null;
+  personality?: string | null;
+};
 
 export default function AssistantsPage() {
   const router = useRouter();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
+  const [assistants, setAssistants] = useState<Assistant[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredAssistants = mockAssistants.filter(
+  useEffect(() => {
+    if (user?.id) {
+      fetchAssistants();
+    }
+  }, [user?.id]);
+
+  // Refresh assistants when page becomes visible (e.g., returning from create page)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user?.id) {
+        fetchAssistants();
+      }
+    };
+
+    const handleFocus = () => {
+      if (user?.id) {
+        fetchAssistants();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [user?.id]);
+
+  const fetchAssistants = async () => {
+    if (!user?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('assistants')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setAssistants(data || []);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch assistants",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredAssistants = assistants.filter(
     (assistant) =>
       assistant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      assistant.description.toLowerCase().includes(searchQuery.toLowerCase())
+      (assistant.description && assistant.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const handleDeleteAssistant = (assistantId: string) => {
-    console.log("Delete assistant:", assistantId);
-    // In real app, call delete API here
+  const handleDeleteAssistant = async (assistantId: string) => {
+    if (!confirm('Are you sure you want to delete this assistant?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('assistants')
+        .delete()
+        .eq('id', assistantId);
+
+      if (error) throw error;
+      toast({
+        title: "Success",
+        description: "Assistant deleted successfully"
+      });
+      fetchAssistants();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete assistant",
+        variant: "destructive"
+      });
+    }
   };
+
+  if (loading) {
+    return <div className="p-8">Loading assistants...</div>;
+  }
 
   return (
     <div>
@@ -107,13 +152,23 @@ export default function AssistantsPage() {
               Create and manage your AI assistants
             </p>
           </div>
-          <Button
-            className="mt-4 lg:mt-0 bg-gradient-primary hover:opacity-90 shadow-glow"
-            onClick={() => router.push("/dashboard/assistants/create")}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Create Assistant
-          </Button>
+          <div className="flex gap-2 mt-4 lg:mt-0">
+            <Button
+              variant="outline"
+              onClick={() => fetchAssistants()}
+              disabled={loading}
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+            <Button
+              className="bg-gradient-primary hover:opacity-90 shadow-glow"
+              onClick={() => router.push("/dashboard/assistants/create")}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create Assistant
+            </Button>
+          </div>
         </div>
 
         {/* Search */}
@@ -148,15 +203,15 @@ export default function AssistantsPage() {
                       </CardTitle>
                       <Badge
                         variant={
-                          assistant.status === "active" ? "default" : "secondary"
+                          assistant.is_active ? "default" : "secondary"
                         }
                         className={
-                          assistant.status === "active"
+                          assistant.is_active
                             ? "bg-success text-success-foreground"
                             : ""
                         }
                       >
-                        {assistant.status}
+                        {assistant.is_active ? "active" : "inactive"}
                       </Badge>
                     </div>
                   </div>
@@ -213,19 +268,11 @@ export default function AssistantsPage() {
                 <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
                   <div className="flex items-center">
                     <MessageSquare className="w-4 h-4 mr-1" />
-                    {assistant.totalChats} chats
+                    {assistant.total_chats || 0} chats
                   </div>
-                  <div>Last used: {assistant.lastUsed}</div>
+                  <div>Created: {new Date(assistant.created_at).toLocaleDateString()}</div>
                 </div>
 
-                {/* Tags */}
-                <div className="flex flex-wrap gap-1 mb-4">
-                  {assistant.tags.map((tag) => (
-                    <Badge key={tag} variant="outline" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
 
                 {/* Actions */}
                 <div className="flex space-x-2">

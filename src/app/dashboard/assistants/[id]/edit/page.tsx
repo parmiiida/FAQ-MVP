@@ -4,77 +4,120 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Bot, ArrowLeft, Save, X } from 'lucide-react';
+import { Bot, ArrowLeft, Save } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useState, useEffect, use } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 const mockAssistant = {
   id: '1',
   name: 'Customer Support Bot',
   description: 'Handles customer inquiries and provides support across multiple channels',
   personality: 'Friendly and professional, uses simple language, always helpful and patient',
-  tags: ['customer-service', 'support'],
   status: 'active'
 };
 
-const predefinedTags = [
-  'customer-service', 'support', 'sales', 'products', 'faq', 'general',
-  'technical', 'billing', 'onboarding', 'recommendations'
-];
+
+type Assistant = {
+  id: string;
+  name: string;
+  description: string | null;
+  personality: string | null;
+  tone: string | null;
+};
 
 export default function AssistantEdit({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { id } = use(params);
+  const { user } = useAuth();
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [personality, setPersonality] = useState('');
-  const [tags, setTags] = useState<string[]>([]);
-  const [customTag, setCustomTag] = useState('');
+  const [tone, setTone] = useState('friendly');
   const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load assistant data - in real app this would be from API
-    setName(mockAssistant.name);
-    setDescription(mockAssistant.description);
-    setPersonality(mockAssistant.personality);
-    setTags(mockAssistant.tags);
-  }, [id]);
+    if (user?.id) {
+      fetchAssistant();
+    }
+  }, [id, user?.id]);
+
+  const fetchAssistant = async () => {
+    if (!user?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('assistants')
+        .select('*')
+        .eq('id', id)
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setName(data.name || '');
+        setDescription(data.description || '');
+        setPersonality(data.personality || '');
+        setTone(data.tone || 'friendly');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load assistant data",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Mock API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    if (!user?.id) return;
 
-    toast({
-      title: "Assistant updated!",
-      description: `${name} has been updated successfully.`,
-    });
+    try {
+      const { error } = await supabase
+        .from('assistants')
+        .update({
+          name,
+          description,
+          personality,
+          tone,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .eq('user_id', user.id);
 
-    setIsLoading(false);
-    router.push('/dashboard/assistants');
-  };
+      if (error) throw error;
 
-  const addTag = (tag: string) => {
-    if (!tags.includes(tag)) {
-      setTags([...tags, tag]);
+      toast({
+        title: "Assistant updated!",
+        description: `${name} has been updated successfully.`,
+      });
+
+      router.push('/dashboard/assistants');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update assistant",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const removeTag = (tag: string) => {
-    setTags(tags.filter(t => t !== tag));
-  };
 
-  const handleAddCustomTag = () => {
-    if (customTag.trim() && !tags.includes(customTag.trim())) {
-      setTags([...tags, customTag.trim()]);
-      setCustomTag('');
-    }
-  };
+  if (loading) {
+    return <div className="p-8">Loading assistant data...</div>;
+  }
 
   return (
     <div>
@@ -133,7 +176,22 @@ export default function AssistantEdit({ params }: { params: Promise<{ id: string
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="personality">Personality & Tone</Label>
+                <Label htmlFor="tone">Tone</Label>
+                <select
+                  id="tone"
+                  value={tone}
+                  onChange={(e) => setTone(e.target.value)}
+                  className="w-full px-3 py-2 border border-input bg-background rounded-md"
+                >
+                  <option value="friendly">Friendly</option>
+                  <option value="professional">Professional</option>
+                  <option value="casual">Casual</option>
+                  <option value="formal">Formal</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="personality">Personality & Behavior</Label>
                 <Textarea
                   id="personality"
                   placeholder="Describe the assistant's personality, tone, and communication style..."
@@ -146,67 +204,6 @@ export default function AssistantEdit({ params }: { params: Promise<{ id: string
                 </p>
               </div>
 
-              {/* Tags */}
-              <div className="space-y-3">
-                <Label>Tags</Label>
-                <p className="text-sm text-muted-foreground">
-                  Add tags to categorize and organize your assistant
-                </p>
-
-                {/* Selected tags */}
-                {tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {tags.map((tag) => (
-                      <Badge key={tag} variant="secondary" className="pr-1">
-                        {tag}
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="h-auto p-1 ml-1 hover:bg-transparent"
-                          onClick={() => removeTag(tag)}
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-
-                {/* Predefined tags */}
-                <div className="flex flex-wrap gap-2">
-                  {predefinedTags.filter(tag => !tags.includes(tag)).map((tag) => (
-                    <Button
-                      key={tag}
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => addTag(tag)}
-                      className="text-xs"
-                    >
-                      + {tag}
-                    </Button>
-                  ))}
-                </div>
-
-                {/* Custom tag input */}
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Add custom tag..."
-                    value={customTag}
-                    onChange={(e) => setCustomTag(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddCustomTag())}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleAddCustomTag}
-                    disabled={!customTag.trim()}
-                  >
-                    Add
-                  </Button>
-                </div>
-              </div>
 
               <div className="flex gap-3 pt-6">
                 <Button

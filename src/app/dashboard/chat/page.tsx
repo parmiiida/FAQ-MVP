@@ -1,269 +1,525 @@
-'use client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+'use client'
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bot, User, Send, ArrowLeft, Download, History, Code, Settings } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Send,
+  Bot,
+  User,
+  Download,
+  RefreshCcw,
+  MessageCircle,
+  Clock,
+  Trash2
+} from 'lucide-react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+import gsap from 'gsap';
 
-const mockMessages = [
-  { id: '1', role: 'assistant', content: 'Hello! I\'m your Customer Support Bot. How can I help you today?', timestamp: Date.now() - 300000 },
-  { id: '2', role: 'user', content: 'How do I reset my password?', timestamp: Date.now() - 240000 },
-  { id: '3', role: 'assistant', content: 'To reset your password, click on the "Forgot Password" link on the login page and follow the instructions sent to your email.', timestamp: Date.now() - 180000 },
-];
+type Assistant = {
+  id: string;
+  name: string;
+  description: string | null;
+  tone: string | null;
+  personality: string | null;
+};
 
-const mockConversationLogs = [
-  { id: '1', date: '2024-01-15', messages: 12, duration: '8m 30s', status: 'completed' },
-  { id: '2', date: '2024-01-14', messages: 6, duration: '3m 15s', status: 'completed' },
-  { id: '3', date: '2024-01-14', messages: 18, duration: '12m 45s', status: 'completed' },
-  { id: '4', date: '2024-01-13', messages: 4, duration: '2m 10s', status: 'incomplete' },
-];
+type FAQ = {
+  id: string;
+  question: string;
+  answer: string;
+  assistant_id: string;
+  is_visible: boolean | null;
+};
 
-export default function Chat() {
+type ChatMessage = {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
+};
+
+type ChatSession = {
+  id: string;
+  assistant_id: string | null;
+  last_activity: string;
+  is_test_session: boolean | null;
+  started_at: string;
+  user_id: string | null;
+  assistants: { name: string } | null;
+};
+
+const ChatInterface = () => {
+  const searchParams = useSearchParams();
   const router = useRouter();
-  const id = 'demo-assistant';
-  const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState(mockMessages);
-  const [activeTab, setActiveTab] = useState('chat');
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  const handleSend = () => {
-    if (!message.trim()) return;
+  const [assistants, setAssistants] = useState<Assistant[]>([]);
+  const [selectedAssistant, setSelectedAssistant] = useState<Assistant | null>(null);
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    { role: 'assistant', content: 'Hello! I\'m your AI assistant. How can I help you today?', timestamp: new Date() }
+  ]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
 
-    const newMessage = {
-      id: Date.now().toString(),
-      role: 'user' as const,
-      content: message,
-      timestamp: Date.now()
-    };
+  useEffect(() => {
+    fetchAssistants();
+    fetchChatSessions();
 
-    setMessages([...messages, newMessage]);
-    setMessage('');
+    const assistantId = searchParams.get('assistant');
+    if (assistantId) {
+      // Will be set when assistants are loaded
+    }
+  }, []);
 
-    // Mock AI response
-    setTimeout(() => {
-      const aiResponse = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant' as const,
-        content: 'Thank you for your question! This is a mock response from your AI assistant.',
-        timestamp: Date.now()
-      };
-      setMessages(prev => [...prev, aiResponse]);
-    }, 1000);
+  useEffect(() => {
+    if (assistants.length > 0) {
+      const assistantId = searchParams.get('assistant');
+      if (assistantId) {
+        const assistant = assistants.find(a => a.id === assistantId);
+        if (assistant) {
+          handleAssistantChange(assistant);
+        }
+      } else if (assistants.length > 0) {
+        handleAssistantChange(assistants[0]);
+      }
+    }
+  }, [assistants]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const exportChatLogs = () => {
-    const chatData = {
-      assistant: 'Customer Support Bot',
-      date: new Date().toISOString(),
-      messages: messages
+  const fetchAssistants = async () => {
+    if (!user?.id) return;
+    const userId = user.id;
+    try {
+      const { data, error } = await supabase
+        .from('assistants')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setAssistants(data || []);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch assistants",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const fetchChatSessions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('chat_sessions')
+        .select(`
+          *,
+          assistants (name)
+        `)
+        .eq('is_test_session', true)
+        .order('last_activity', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      setChatSessions(data || []);
+    } catch (error) {
+      console.error('Failed to fetch chat sessions:', error);
+    }
+  };
+
+  const fetchFAQs = async (assistantId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('faqs')
+        .select('*')
+        .eq('assistant_id', assistantId)
+        .eq('is_visible', true);
+
+      if (error) throw error;
+      setFaqs(data || []);
+    } catch (error) {
+      console.error('Failed to fetch FAQs:', error);
+    }
+  };
+
+  const handleAssistantChange = async (assistant: Assistant) => {
+    setSelectedAssistant(assistant);
+    await fetchFAQs(assistant.id);
+
+    // Reset chat
+    setMessages([
+      {
+        role: 'assistant',
+        content: `Hello! I'm ${assistant.name}. How can I help you today?`,
+        timestamp: new Date()
+      }
+    ]);
+
+    // Create new test session
+    try {
+      const { data, error } = await supabase
+        .from('chat_sessions')
+        .insert({
+          assistant_id: assistant.id,
+          user_id: user?.id,
+          session_data: [],
+          is_test_session: true
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Failed to create chat session:', error);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!inputMessage.trim() || !selectedAssistant || isLoading) return;
+
+    const userMessage: ChatMessage = {
+      role: 'user',
+      content: inputMessage,
+      timestamp: new Date()
     };
 
-    const dataStr = JSON.stringify(chatData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `chat-log-${new Date().toISOString().split('T')[0]}.json`;
-    link.click();
+    setMessages(prev => [...prev, userMessage]);
+    setInputMessage('');
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('chat-with-ai', {
+        body: {
+          message: inputMessage,
+          assistantId: selectedAssistant.id,
+          faqs: faqs,
+          context: {
+            tone: selectedAssistant.tone,
+            personality: selectedAssistant.personality
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      const assistantMessage: ChatMessage = {
+        role: 'assistant',
+        content: data.response,
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, assistantMessage]);
+
+      // Log analytics
+      await supabase
+        .from('analytics')
+        .insert({
+          assistant_id: selectedAssistant.id,
+          user_id: user?.id,
+          event_type: 'chat_message',
+          event_data: {
+            user_message: inputMessage,
+            ai_response: data.response,
+            session_type: 'test'
+          }
+        });
+
+    } catch (error) {
+      console.error('Chat error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to get response from AI assistant",
+        variant: "destructive"
+      });
+
+      const errorMessage: ChatMessage = {
+        role: 'assistant',
+        content: 'Sorry, I encountered an error. Please try again.',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const exportChat = () => {
+    const chatText = messages
+      .map(m => `${m.role.toUpperCase()}: ${m.content}`)
+      .join('\n\n');
+
+    const blob = new Blob([chatText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chat-${selectedAssistant?.name}-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
+
+    toast({ title: "Success", description: "Chat exported successfully" });
+  };
+
+  const clearChat = () => {
+    setMessages([
+      {
+        role: 'assistant',
+        content: `Hello! I'm ${selectedAssistant?.name}. How can I help you today?`,
+        timestamp: new Date()
+      }
+    ]);
   };
 
   return (
-    <div>
-      <div className="px-4 lg:px-6 max-w-4xl mx-auto">
-        <div className="flex items-center mb-6">
-          <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard/assistants')} className="mr-4">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Assistants
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">Test Chat</h1>
-            <p className="text-muted-foreground">Customer Support Bot</p>
-          </div>
-        </div>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-[600px] flex flex-col">
-          <div className="flex items-center justify-between p-4 border-b">
-            <TabsList>
-              <TabsTrigger value="chat" className="flex items-center">
-                <Bot className="w-4 h-4 mr-2" />
-                Live Chat
-              </TabsTrigger>
-              <TabsTrigger value="logs" className="flex items-center">
-                <History className="w-4 h-4 mr-2" />
-                Conversation Logs
-              </TabsTrigger>
-              <TabsTrigger value="embed" className="flex items-center">
-                <Code className="w-4 h-4 mr-2" />
-                Embed & API
-              </TabsTrigger>
-            </TabsList>
-            <Button onClick={exportChatLogs} variant="outline" size="sm">
-              <Download className="w-4 h-4 mr-2" />
-              Export Logs
-            </Button>
-          </div>
-
-          <TabsContent value="chat" className="flex-1 flex flex-col m-0">
-            <Card className="bg-gradient-card border-0 shadow-dashboard-md flex-1 flex flex-col">
-              <CardContent className="flex-1 flex flex-col p-0">
-                {/* Messages */}
-                <ScrollArea className="flex-1 p-4">
-                  <div className="space-y-4">
-                    {messages.map((msg) => (
-                      <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`flex items-start space-x-2 max-w-[80%] ${msg.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}`}>
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                            msg.role === 'user' ? 'bg-primary' : 'bg-gradient-primary'
-                          }`}>
-                            {msg.role === 'user' ? (
-                              <User className="w-4 h-4 text-white" />
-                            ) : (
-                              <Bot className="w-4 h-4 text-white" />
-                            )}
-                          </div>
-                          <div className={`rounded-lg p-3 ${
-                            msg.role === 'user'
-                              ? 'bg-primary text-white'
-                              : 'bg-muted'
-                          }`}>
-                            <p className="text-sm">{msg.content}</p>
-                            <p className="text-xs opacity-70 mt-1">
-                              {new Date(msg.timestamp).toLocaleTimeString()}
-                            </p>
-                          </div>
-                        </div>
+    <div className="h-[calc(100vh-8rem)] flex gap-6">
+      {/* Sidebar */}
+      <div className="w-80 space-y-4">
+        {/* Assistant Selection */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Select Assistant</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {assistants.length === 0 ? (
+              <div className="text-center py-8">
+                <Bot className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground mb-3">No active assistants</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push('/dashboard/assistants')}
+                >
+                  Create Assistant
+                </Button>
+              </div>
+            ) : (
+              <Select
+                value={selectedAssistant?.id || ''}
+                onValueChange={(value) => {
+                  const assistant = assistants.find(a => a.id === value);
+                  if (assistant) handleAssistantChange(assistant);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose an assistant" />
+                </SelectTrigger>
+                <SelectContent>
+                  {assistants.map((assistant) => (
+                    <SelectItem key={assistant.id} value={assistant.id}>
+                      <div className="flex items-center gap-2">
+                        <Bot className="w-4 h-4" />
+                        {assistant.name}
                       </div>
-                    ))}
-                  </div>
-                </ScrollArea>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </CardContent>
+        </Card>
 
-                {/* Input */}
-                <div className="border-t p-4">
-                  <div className="flex space-x-2">
-                    <Input
-                      placeholder="Type your message..."
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                      className="flex-1"
-                    />
-                    <Button onClick={handleSend} className="bg-gradient-primary hover:opacity-90">
-                      <Send className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+        {/* Assistant Info */}
+        {selectedAssistant && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Bot className="w-5 h-5" />
+                {selectedAssistant.name}
+              </CardTitle>
+              <CardDescription>
+                {selectedAssistant.description || 'No description'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex gap-2">
+                <Badge variant="outline" className="text-xs">
+                  {selectedAssistant.tone}
+                </Badge>
+                <Badge variant="outline" className="text-xs">
+                  {faqs.length} FAQs
+                </Badge>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={clearChat}>
+                  <RefreshCcw className="w-4 h-4 mr-2" />
+                  Clear Chat
+                </Button>
+                <Button variant="outline" size="sm" onClick={exportChat}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Export
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-          <TabsContent value="logs" className="flex-1 m-0">
-            <Card className="bg-gradient-card border-0 shadow-dashboard-md h-full">
-              <CardHeader>
-                <CardTitle>Conversation History</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {mockConversationLogs.map((log) => (
-                    <div key={log.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                      <div>
-                        <p className="font-medium">{log.date}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {log.messages} messages • {log.duration}
-                        </p>
+        {/* Recent Sessions */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Recent Sessions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-40">
+              {chatSessions.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No recent sessions
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {chatSessions.map((session) => (
+                    <div key={session.id} className="p-2 rounded border text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">{session.assistants?.name}</span>
+                        <Clock className="w-3 h-3 text-muted-foreground" />
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          log.status === 'completed' ? 'bg-green-500/20 text-green-700' : 'bg-yellow-500/20 text-yellow-700'
-                        }`}>
-                          {log.status}
-                        </span>
-                        <Button variant="ghost" size="sm">
-                          <Download className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      <p className="text-muted-foreground">
+                        {new Date(session.last_activity).toLocaleDateString()}
+                      </p>
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="embed" className="flex-1 m-0">
-            <div className="grid gap-6 h-full">
-              <Card className="bg-gradient-card border-0 shadow-dashboard-md">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Code className="w-5 h-5 mr-2" />
-                    Website Embed Code
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Embed Snippet</label>
-                      <div className="bg-muted p-4 rounded-lg text-sm font-mono">
-                        <code>{`<script src="https://ai-dashboard.com/embed.js"></script>
-<div id="ai-assistant" data-assistant-id="${id}"></div>`}</code>
-                      </div>
-                      <Button className="mt-2" variant="outline" size="sm">
-                        Copy Code
-                      </Button>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-sm font-medium mb-2 block">Primary Color</label>
-                        <input type="color" className="w-full h-10 rounded border" defaultValue="#6366f1" />
-                      </div>
-                      <div>
-                        <label className="text-sm font-medium mb-2 block">Position</label>
-                        <select className="w-full h-10 rounded border bg-background px-3">
-                          <option>Bottom Right</option>
-                          <option>Bottom Left</option>
-                          <option>Top Right</option>
-                          <option>Top Left</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-card border-0 shadow-dashboard-md">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Settings className="w-5 h-5 mr-2" />
-                    API Access
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">API Endpoint</label>
-                      <div className="bg-muted p-3 rounded-lg text-sm font-mono">
-                        https://api.ai-dashboard.com/v1/assistants/{id}/chat
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">API Key</label>
-                      <div className="flex space-x-2">
-                        <Input value="sk-••••••••••••••••••••••••••••••••" readOnly />
-                        <Button variant="outline">Regenerate</Button>
-                      </div>
-                    </div>
-                    <Button variant="outline" className="w-full">
-                      View API Documentation
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        </Tabs>
+              )}
+            </ScrollArea>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Chat Area */}
+      <Card className="flex-1 flex flex-col">
+        <CardHeader className="border-b">
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <MessageCircle className="w-5 h-5" />
+              {selectedAssistant ? `Chat with ${selectedAssistant.name}` : 'Select an Assistant'}
+            </CardTitle>
+            {selectedAssistant && (
+              <Badge variant="default">Test Mode</Badge>
+            )}
+          </div>
+        </CardHeader>
+
+        {selectedAssistant ? (
+          <>
+            {/* Messages */}
+            <CardContent className="flex-1 overflow-hidden p-0">
+              <ScrollArea className="h-full p-4">
+                <div className="space-y-4">
+                  {messages.map((message, index) => (
+                    <div
+                      key={index}
+                      className={cn(
+                        "flex gap-3",
+                        message.role === 'user' ? 'justify-end' : 'justify-start'
+                      )}
+                    >
+                      {message.role === 'assistant' && (
+                        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                          <Bot className="w-4 h-4 text-primary-foreground" />
+                        </div>
+                      )}
+                      <div
+                        className={cn(
+                          "max-w-[80%] p-3 rounded-lg",
+                          message.role === 'user'
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-foreground"
+                        )}
+                      >
+                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                        <p className="text-xs opacity-70 mt-1">
+                          {message.timestamp.toLocaleTimeString()}
+                        </p>
+                      </div>
+                      {message.role === 'user' && (
+                        <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
+                          <User className="w-4 h-4 text-secondary-foreground" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {isLoading && (
+                    <div className="flex gap-3 justify-start">
+                      <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                        <Bot className="w-4 h-4 text-primary-foreground" />
+                      </div>
+                      <div className="bg-muted p-3 rounded-lg">
+                        <div className="flex space-x-1">
+                          <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
+                          <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                          <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div ref={messagesEndRef} />
+              </ScrollArea>
+            </CardContent>
+
+            {/* Input */}
+            <div className="border-t p-4">
+              <div className="flex gap-2">
+                <Input
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Type your message..."
+                  disabled={isLoading}
+                  className="flex-1"
+                />
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={!inputMessage.trim() || isLoading}
+                >
+                  <Send className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <CardContent className="flex-1 flex items-center justify-center">
+            <div className="text-center">
+              <Bot className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No Assistant Selected</h3>
+              <p className="text-muted-foreground mb-4">
+                Choose an assistant from the sidebar to start chatting
+              </p>
+              <Button onClick={() => router.push('/dashboard/assistants')}>
+                Create Assistant
+              </Button>
+            </div>
+          </CardContent>
+        )}
+      </Card>
     </div>
   );
-}
+};
+
+export default ChatInterface;

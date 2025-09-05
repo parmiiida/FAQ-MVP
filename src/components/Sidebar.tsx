@@ -24,9 +24,8 @@ const navigation = [
     href: "/dashboard/faq",
     icon: HelpCircle,
     children: [
-      { name: "Manage FAQs", href: "/dashboard/faqs" },
-      { name: "Add FAQ", href: "/dashboard/faqs/create" },
-      { name: "Categories", href: "/dashboard/faqs/categories" },
+      { name: "Manage FAQs", href: "/dashboard/faq" },
+      { name: "Add FAQ", href: "/dashboard/faq/create" },
     ],
   },
   { name: "Chat & Test", href: "/dashboard/chat", icon: MessageSquare },
