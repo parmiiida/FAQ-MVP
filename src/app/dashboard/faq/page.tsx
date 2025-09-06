@@ -129,9 +129,7 @@ const ManageFAQs = () => {
         </div>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
+
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
@@ -157,8 +155,7 @@ const ManageFAQs = () => {
               ))}
             </div>
           </div>
-        </CardContent>
-      </Card>
+
 
       {/* FAQ List */}
       {filteredFAQs.length === 0 ? (

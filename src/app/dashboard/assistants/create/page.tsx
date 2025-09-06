@@ -10,6 +10,13 @@ import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 
 export default function AssistantCreate() {
@@ -93,7 +100,7 @@ export default function AssistantCreate() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Form */}
           <div className="lg:col-span-2">
-            <Card className="bg-gradient-card border-0 shadow-dashboard-md">
+            <Card className="assistant-card">
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Bot className="w-5 h-5 mr-2 text-primary" />
@@ -129,17 +136,17 @@ export default function AssistantCreate() {
 
                   <div className="space-y-2">
                     <Label htmlFor="tone">Tone</Label>
-                    <select
-                      id="tone"
-                      value={tone}
-                      onChange={(e) => setTone(e.target.value)}
-                      className="w-full px-3 py-2 border border-input bg-background rounded-md"
-                    >
-                      <option value="friendly">Friendly</option>
-                      <option value="professional">Professional</option>
-                      <option value="casual">Casual</option>
-                      <option value="formal">Formal</option>
-                    </select>
+                    <Select value={tone} onValueChange={setTone}>
+        <SelectTrigger id="tone">
+          <SelectValue placeholder="Select a tone" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="friendly">Friendly</SelectItem>
+          <SelectItem value="professional">Professional</SelectItem>
+          <SelectItem value="casual">Casual</SelectItem>
+          <SelectItem value="formal">Formal</SelectItem>
+        </SelectContent>
+      </Select>
                   </div>
 
                   <div className="space-y-2">
@@ -180,7 +187,7 @@ export default function AssistantCreate() {
 
           {/* Preview */}
           <div>
-            <Card className="bg-gradient-card border-0 shadow-dashboard-md">
+            <Card className="assistant-card">
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Sparkles className="w-5 h-5 mr-2 text-secondary" />

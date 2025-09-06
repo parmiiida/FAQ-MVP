@@ -189,7 +189,7 @@ export default function AssistantsPage() {
           {filteredAssistants.map((assistant) => (
             <Card
               key={assistant.id}
-              className="bg-gradient-card border-0 shadow-dashboard-md hover:shadow-dashboard-lg transition-all duration-200"
+              className="assistant-card"
             >
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">

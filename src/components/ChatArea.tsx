@@ -1,169 +1,152 @@
 'use client'
-import React, { useState, useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import React, { useRef, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Card } from '@/components/ui/card';
-import { Send, Loader2 } from 'lucide-react';
-import { gsap } from 'gsap';
+import { Badge } from '@/components/ui/badge';
+import { MessageCircle, Bot, User, Send } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useChat } from '@/hooks/services/useChat';
+import { Assistant, ChatMessage } from '@/types/index';
+import { useRouter } from 'next/navigation';
 
-interface Message {
-  id: string;
-  content: string;
-  isUser: boolean;
-  timestamp: Date;
+interface ChatAreaProps {
+  selectedAssistant: Assistant | null;
+  userId: string | undefined;
+  onExportChat: (messages: ChatMessage[]) => void;
+  messages: ChatMessage[];
+  setMessages: (messages: ChatMessage[]) => void;
 }
 
-export const ChatArea = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [inputValue, setInputValue] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const messageRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+const ChatArea = ({ selectedAssistant, userId }: ChatAreaProps) => {
+  const router = useRouter();
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const { messages,  inputMessage, setInputMessage, isLoading, handleSendMessage } = useChat(selectedAssistant, userId);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  const animateMessage = (index: number, isUser: boolean) => {
-    const element = messageRefs.current[index];
-    if (element) {
-      gsap.set(element, {
-        opacity: 0,
-        x: isUser ? 30 : -30,
-        y: 20
-      });
-      gsap.to(element, {
-        opacity: 1,
-        x: 0,
-        y: 0,
-        duration: 0.5,
-        ease: 'power2.out'
-      });
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
     }
   };
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inputValue.trim() || isLoading) return;
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: inputValue,
-      isUser: true,
-      timestamp: new Date(),
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setInputValue('');
-    setIsLoading(true);
-
-    // Animate user message
-    setTimeout(() => {
-      animateMessage(messages.length, true);
-    }, 100);
-
-    // Simulate AI response
-    setTimeout(() => {
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: `I understand your question: "${userMessage.content}". This is a demo response. In a real implementation, this would connect to your AI service and knowledge base.`,
-        isUser: false,
-        timestamp: new Date(),
-      };
-
-      setMessages(prev => [...prev, aiMessage]);
-      setIsLoading(false);
-
-      // Animate AI message
-      setTimeout(() => {
-        animateMessage(messages.length + 1, false);
-      }, 100);
-    }, 1500);
-  };
-
   return (
-    <div className="flex-1 flex flex-col h-full">
-      {/* Chat Header */}
-      <div className="border-b p-4 bg-background">
-        <h2 className="text-lg font-semibold">AI Assistant</h2>
-        <p className="text-sm text-muted-foreground">Ask me anything about your business</p>
-      </div>
-
-      {/* Messages Area */}
-      <ScrollArea className="flex-1 p-4">
-        <div className="space-y-4">
-          {messages.length === 0 && (
-            <div className="text-center py-8">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl">💬</span>
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Start a conversation</h3>
-              <p className="text-muted-foreground">Ask me anything and I'll help you with information from your knowledge base.</p>
-            </div>
-          )}
-
-          {messages.map((message, index) => (
-            <div
-              key={message.id}
-              ref={(el) => { messageRefs.current[index] = el; }}
-              className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
-            >
-              <Card className={`max-w-[80%] p-3 ${
-                message.isUser
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-card border'
-              }`}>
-                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                <p className={`text-xs mt-2 ${
-                  message.isUser ? 'text-primary-foreground/70' : 'text-muted-foreground'
-                }`}>
-                  {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </p>
-              </Card>
-            </div>
-          ))}
-
-          {isLoading && (
-            <div className="flex justify-start">
-              <Card className="bg-card border p-3">
-                <div className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span className="text-sm text-muted-foreground">AI is typing...</span>
-                </div>
-              </Card>
-            </div>
+    <Card className="flex-1 flex flex-col">
+      <CardHeader className="border-b">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <MessageCircle className="w-5 h-5" />
+            {selectedAssistant ? `Chat with ${selectedAssistant.name}` : 'Select an Assistant'}
+          </CardTitle>
+          {selectedAssistant && (
+            <Badge variant="default">Test Mode</Badge>
           )}
         </div>
-        <div ref={messagesEndRef} />
-      </ScrollArea>
+      </CardHeader>
 
-      {/* Input Area */}
-      <div className="border-t p-4 bg-background">
-        <form onSubmit={handleSendMessage} className="flex gap-2">
-          <Input
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Ask me anything..."
-            disabled={isLoading}
-            className="flex-1"
-          />
-          <Button
-            type="submit"
-            disabled={!inputValue.trim() || isLoading}
-            size="icon"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-        </form>
-        <p className="text-xs text-muted-foreground mt-2 text-center">
-          Free plan: 7 messages remaining today
-        </p>
-      </div>
-    </div>
+      {selectedAssistant ? (
+        <>
+          {/* Messages */}
+          <CardContent className="flex-1 overflow-hidden p-0">
+            <ScrollArea className="h-full p-4">
+              <div className="space-y-4">
+                {messages.map((message, index) => (
+                  <div
+                    key={index}
+                    className={cn(
+                      "flex gap-3",
+                      message.role === 'user' ? 'justify-end' : 'justify-start'
+                    )}
+                  >
+                    {message.role === 'assistant' && (
+                      <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                        <Bot className="w-4 h-4 text-primary-foreground" />
+                      </div>
+                    )}
+                    <div
+                      className={cn(
+                        "max-w-[80%] p-3 rounded-lg",
+                        message.role === 'user'
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-foreground"
+                      )}
+                    >
+                      <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                      <p className="text-xs opacity-70 mt-1">
+                        {message.timestamp.toLocaleTimeString()}
+                      </p>
+                    </div>
+                    {message.role === 'user' && (
+                      <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
+                        <User className="w-4 h-4 text-secondary-foreground" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {isLoading && (
+                  <div className="flex gap-3 justify-start">
+                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                      <Bot className="w-4 h-4 text-primary-foreground" />
+                    </div>
+                    <div className="bg-muted p-3 rounded-lg">
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div ref={messagesEndRef} />
+            </ScrollArea>
+          </CardContent>
+
+          {/* Input */}
+          <div className="border-t p-4">
+            <div className="flex gap-2">
+              <Input
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Type your message..."
+                disabled={isLoading}
+                className="flex-1"
+              />
+              <Button
+                onClick={handleSendMessage}
+                disabled={!inputMessage.trim() || isLoading}
+              >
+                <Send className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </>
+      ) : (
+        <CardContent className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <Bot className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No Assistant Selected</h3>
+            <p className="text-muted-foreground mb-4">
+              Choose an assistant from the sidebar to start chatting
+            </p>
+            <Button onClick={() => router.push('/dashboard/assistants')}>
+              Create Assistant
+            </Button>
+          </div>
+        </CardContent>
+      )}
+    </Card>
   );
 };
+
+export default ChatArea;
