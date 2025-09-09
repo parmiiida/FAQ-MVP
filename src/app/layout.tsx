@@ -3,8 +3,8 @@ import { Providers } from "@/components/Providers";
 import "./globals.css"; // your global styles
 
 export const metadata = {
-  title: "ParlA",
-  description: "Nyour AI assistant any every level",
+  title: "ParlAI",
+  description: "your AI assistant any every level",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

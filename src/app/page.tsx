@@ -21,6 +21,7 @@ import {
   X
 } from 'lucide-react';
 import { useState } from 'react';
+import Image from 'next/image';
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -172,10 +173,17 @@ const Index = () => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <MessageSquare className="h-5 w-5 text-primary-foreground" />
+              <div className=" bg-primary rounded-lg flex items-center justify-center">
+              <Image
+              src="/logo.png"
+              alt="ParlAI Logo"
+              height={8 } width={24}
+              className="w-8 h-8"
+            />
               </div>
-              <span className="ml-2 text-xl font-bold">AI FAQ Assistant</span>
+              <div className='ml-2 text-xl font-bold'>Parl<span className='text-primary'>AI</span></div>
+              <p className='ml-2 text-xl font-bold'></p>
+
             </div>
 
             {/* Desktop Navigation */}
@@ -232,7 +240,7 @@ const Index = () => {
             </Badge>
 
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              AI-Powered FAQ Assistant for Your Business
+              AI-Powered Assistant for Your Business
             </h1>
 
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto">
