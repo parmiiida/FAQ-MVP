@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -77,17 +78,15 @@ export const AddFAQModal: React.FC<AddFAQModalProps> = ({
 
   const handleCreateCategory = async () => {
     if (!newCategoryName.trim()) return;
-   if (!user?.id) return;
+    if (!user?.id) return;
     try {
-      const { error } = await supabase
-        .from("faq_categories")
-        .insert({
-          user_id: user.id,
-          name: newCategoryName.trim(),
-          description: `${newCategoryName} related questions`,
-          color: "#6B7280",
-          sort_order: categories.length,
-        } as any);
+      const { error } = await supabase.from("faqs").insert({
+        user_id: user.id,
+        name: newCategoryName.trim(),
+        description: `${newCategoryName} related questions`,
+        color: "#6B7280",
+        sort_order: categories.length,
+      } as any);
 
       if (error) throw error;
 
@@ -110,17 +109,15 @@ export const AddFAQModal: React.FC<AddFAQModalProps> = ({
     setIsLoading(true);
     if (!user?.id) return;
     try {
-      const { error } = await supabase
-        .from("faqs")
-        .insert({
-          user_id: user.id,
-          question: question.trim(),
-          answer: answer.trim(),
-          category_id: categoryId,
-          tags,
-          is_visible: isVisible,
-          sort_order: 0,
-        } as any);
+      const { error } = await supabase.from("faqs").insert({
+        user_id: user.id,
+        question: question.trim(),
+        answer: answer.trim(),
+        category_id: categoryId,
+        tags,
+        is_visible: isVisible,
+        sort_order: 0,
+      } as any);
 
       if (error) throw error;
 
