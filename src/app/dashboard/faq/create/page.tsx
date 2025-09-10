@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import gsap from "gsap";
@@ -30,21 +30,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 
-import {
-  Plus,
-  Trash2,
-  Save,
-  Tag,
-  Eye,
-  EyeOff,
-} from "lucide-react";
+import { Plus, Trash2, Save, Tag, Eye, EyeOff } from "lucide-react";
 
 const CreateEditFAQ = () => {
   const router = useRouter();
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const [assistants, setAssistants] = useState<{ id: string; name: string }[]>([]);
+  const [assistants, setAssistants] = useState<{ id: string; name: string }[]>(
+    []
+  );
   const [categories, setCategories] = useState([
     "General",
     "Technical",
@@ -159,13 +154,6 @@ const CreateEditFAQ = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 faq-form">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" onClick={() => router.push("/dashboard/faqs")}>
-          ← Back to FAQs
-        </Button>
-      </div>
-
       <div>
         <h1 className="text-3xl font-bold text-foreground">Create New FAQ</h1>
         <p className="text-muted-foreground mt-2">
@@ -433,7 +421,10 @@ const CreateEditFAQ = () => {
           <Save className="w-4 h-4 mr-2" />
           {isLoading ? "Creating..." : "Create FAQ"}
         </Button>
-        <Button variant="outline" onClick={() => router.push("/dashboard/faqs")}>
+        <Button
+          variant="outline"
+          onClick={() => router.push("/dashboard/faqs")}
+        >
           Cancel
         </Button>
       </div>

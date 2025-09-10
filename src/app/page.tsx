@@ -1,11 +1,17 @@
-'use client'
+"use client";
 
-import React, { useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useRouter } from 'next/navigation';
+import React, { useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useRouter } from "next/navigation";
 import {
   MessageSquare,
   Upload,
@@ -18,10 +24,11 @@ import {
   ArrowRight,
   Star,
   Menu,
-  X
-} from 'lucide-react';
-import { useState } from 'react';
-import Image from 'next/image';
+  X,
+} from "lucide-react";
+import { useState } from "react";
+import Image from "next/image";
+import FloatingRobot from "@/components/homepage/FloatingRobot";
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -30,7 +37,7 @@ const Index = () => {
 
   useEffect(() => {
     if (!loading && user) {
-      router.push('/dashboard');
+      router.push("/dashboard");
     }
   }, [user, loading, router]);
 
@@ -49,51 +56,60 @@ const Index = () => {
     {
       icon: MessageSquare,
       title: "Smart AI Responses",
-      description: "AI learns from your knowledge base to provide accurate, contextual answers to customer questions."
+      description:
+        "AI learns from your knowledge base to provide accurate, contextual answers to customer questions.",
     },
     {
       icon: Upload,
       title: "Easy Setup",
-      description: "Upload your FAQs and documentation in minutes. No technical expertise required."
+      description:
+        "Upload your FAQs and documentation in minutes. No technical expertise required.",
     },
     {
       icon: Clock,
       title: "24/7 Availability",
-      description: "Your AI assistant is always ready to help customers, reducing response times to seconds."
+      description:
+        "Your AI assistant is always ready to help customers, reducing response times to seconds.",
     },
     {
       icon: BarChart3,
       title: "Analytics Dashboard",
-      description: "Track performance, popular questions, and customer satisfaction metrics."
+      description:
+        "Track performance, popular questions, and customer satisfaction metrics.",
     },
     {
       icon: Shield,
       title: "Secure & Private",
-      description: "Enterprise-grade security ensures your data and customer interactions stay protected."
+      description:
+        "Enterprise-grade security ensures your data and customer interactions stay protected.",
     },
     {
       icon: Zap,
       title: "Instant Integration",
-      description: "Embed in your website with a single line of code. Works with any platform."
-    }
+      description:
+        "Embed in your website with a single line of code. Works with any platform.",
+    },
   ];
 
   const steps = [
     {
       step: "1",
       title: "Upload Your FAQs",
-      description: "Import your existing knowledge base or create new FAQs in our intuitive editor."
+      description:
+        "Import your existing knowledge base or create new FAQs in our intuitive editor.",
     },
     {
       step: "2",
       title: "AI Trains Automatically",
-      description: "Our AI analyzes your content and learns to answer questions in your brand voice."
+      description:
+        "Our AI analyzes your content and learns to answer questions in your brand voice.",
     },
     {
       step: "3",
       title: "Customers Get Instant Answers",
-      description: "Deploy the chatbot and start providing 24/7 customer support immediately."
-    }
+      description:
+        "Deploy the chatbot and start providing 24/7 customer support immediately.",
+    },
   ];
 
   const testimonials = [
@@ -101,23 +117,26 @@ const Index = () => {
       name: "Sarah Chen",
       role: "Customer Success Manager",
       company: "TechStart Inc.",
-      content: "Reduced our support tickets by 70% in the first month. The AI understands context perfectly.",
-      avatar: "SC"
+      content:
+        "Reduced our support tickets by 70% in the first month. The AI understands context perfectly.",
+      avatar: "SC",
     },
     {
       name: "Mike Rodriguez",
       role: "Founder",
       company: "E-commerce Plus",
-      content: "Setup took less than 10 minutes. Our customers love getting instant answers at any time.",
-      avatar: "MR"
+      content:
+        "Setup took less than 10 minutes. Our customers love getting instant answers at any time.",
+      avatar: "MR",
     },
     {
       name: "Lisa Wang",
       role: "Operations Director",
       company: "SaaS Solutions",
-      content: "The analytics help us understand what customers really need. It's like having a research tool.",
-      avatar: "LW"
-    }
+      content:
+        "The analytics help us understand what customers really need. It's like having a research tool.",
+      avatar: "LW",
+    },
   ];
 
   const pricingPlans = [
@@ -126,44 +145,65 @@ const Index = () => {
       price: "$0",
       period: "forever",
       description: "Perfect for trying out the platform",
-      features: ["Up to 50 FAQs", "100 messages/month", "Basic analytics", "Email support"],
-      popular: false
+      features: [
+        "Up to 50 FAQs",
+        "100 messages/month",
+        "Basic analytics",
+        "Email support",
+      ],
+      popular: false,
     },
     {
       name: "Pro",
       price: "$29",
       period: "per month",
       description: "For growing businesses",
-      features: ["Unlimited FAQs", "5,000 messages/month", "Advanced analytics", "Priority support", "Custom branding"],
-      popular: true
+      features: [
+        "Unlimited FAQs",
+        "5,000 messages/month",
+        "Advanced analytics",
+        "Priority support",
+        "Custom branding",
+      ],
+      popular: true,
     },
     {
       name: "Enterprise",
       price: "Custom",
       period: "contact us",
       description: "For large organizations",
-      features: ["Everything in Pro", "Unlimited messages", "Custom integrations", "Dedicated support", "SLA guarantee"],
-      popular: false
-    }
+      features: [
+        "Everything in Pro",
+        "Unlimited messages",
+        "Custom integrations",
+        "Dedicated support",
+        "SLA guarantee",
+      ],
+      popular: false,
+    },
   ];
 
   const faqs = [
     {
       question: "Can I use this without any coding knowledge?",
-      answer: "Absolutely! Our platform is designed for non-technical users. Simply upload your content and embed with one line of code."
+      answer:
+        "Absolutely! Our platform is designed for non-technical users. Simply upload your content and embed with one line of code.",
     },
     {
       question: "How accurate are the AI responses?",
-      answer: "Our AI achieves 95%+ accuracy by training specifically on your content. It gets smarter with each interaction."
+      answer:
+        "Our AI achieves 95%+ accuracy by training specifically on your content. It gets smarter with each interaction.",
     },
     {
       question: "Can I customize the chatbot appearance?",
-      answer: "Yes! Pro and Enterprise plans include full customization options to match your brand colors and style."
+      answer:
+        "Yes! Pro and Enterprise plans include full customization options to match your brand colors and style.",
     },
     {
       question: "Is my data secure?",
-      answer: "We use enterprise-grade encryption and never share your data. All conversations are private and secure."
-    }
+      answer:
+        "We use enterprise-grade encryption and never share your data. All conversations are private and secure.",
+    },
   ];
 
   return (
@@ -174,31 +214,52 @@ const Index = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <div className=" bg-primary rounded-lg flex items-center justify-center">
-              <Image
-              src="/logo.png"
-              alt="ParlAI Logo"
-              height={8 } width={24}
-              className="w-8 h-8"
-            />
+                <Image
+                  src="/logo.png"
+                  alt="ParlAI Logo"
+                  height={8}
+                  width={24}
+                  className="w-8 h-8"
+                />
               </div>
-              <div className='ml-2 text-xl font-bold'>Parl<span className='text-primary'>AI</span></div>
-              <p className='ml-2 text-xl font-bold'></p>
-
+              <div className="ml-2 text-xl font-bold">
+                Parl<span className="text-primary">AI</span>
+              </div>
+              <p className="ml-2 text-xl font-bold"></p>
             </div>
 
             {/* Desktop Navigation */}
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-8">
-                <a href="#features" className="hover:text-primary transition-colors">Features</a>
-                <a href="#pricing" className="hover:text-primary transition-colors">Pricing</a>
-                <a href="#demo" className="hover:text-primary transition-colors">Demo</a>
-                <a href="#faq" className="hover:text-primary transition-colors">FAQ</a>
+                <a
+                  href="#features"
+                  className="hover:text-primary transition-colors"
+                >
+                  Features
+                </a>
+                <a
+                  href="#pricing"
+                  className="hover:text-primary transition-colors"
+                >
+                  Pricing
+                </a>
+                <a
+                  href="#demo"
+                  className="hover:text-primary transition-colors"
+                >
+                  Demo
+                </a>
+                <a href="#faq" className="hover:text-primary transition-colors">
+                  FAQ
+                </a>
               </div>
             </div>
 
             <div className="hidden md:flex items-center space-x-4">
-              <Button variant="ghost" onClick={() => router.push('/auth')}>Sign In</Button>
-              <Button onClick={() => router.push('/auth')}>Get Started</Button>
+              <Button variant="ghost" onClick={() => router.push("/auth")}>
+                Sign In
+              </Button>
+              <Button onClick={() => router.push("/auth")}>Get Started</Button>
             </div>
 
             {/* Mobile menu button */}
@@ -208,7 +269,11 @@ const Index = () => {
                 size="icon"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               >
-                {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                {mobileMenuOpen ? (
+                  <X className="h-6 w-6" />
+                ) : (
+                  <Menu className="h-6 w-6" />
+                )}
               </Button>
             </div>
           </div>
@@ -218,13 +283,41 @@ const Index = () => {
         {mobileMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t">
-              <a href="#features" className="block px-3 py-2 hover:bg-accent rounded-md">Features</a>
-              <a href="#pricing" className="block px-3 py-2 hover:bg-accent rounded-md">Pricing</a>
-              <a href="#demo" className="block px-3 py-2 hover:bg-accent rounded-md">Demo</a>
-              <a href="#faq" className="block px-3 py-2 hover:bg-accent rounded-md">FAQ</a>
+              <a
+                href="#features"
+                className="block px-3 py-2 hover:bg-accent rounded-md"
+              >
+                Features
+              </a>
+              <a
+                href="#pricing"
+                className="block px-3 py-2 hover:bg-accent rounded-md"
+              >
+                Pricing
+              </a>
+              <a
+                href="#demo"
+                className="block px-3 py-2 hover:bg-accent rounded-md"
+              >
+                Demo
+              </a>
+              <a
+                href="#faq"
+                className="block px-3 py-2 hover:bg-accent rounded-md"
+              >
+                FAQ
+              </a>
               <div className="px-3 py-2 space-y-2">
-                <Button variant="ghost" className="w-full" onClick={() => router.push('/auth')}>Sign In</Button>
-                <Button className="w-full" onClick={() => router.push('/auth')}>Get Started</Button>
+                <Button
+                  variant="ghost"
+                  className="w-full"
+                  onClick={() => router.push("/auth")}
+                >
+                  Sign In
+                </Button>
+                <Button className="w-full" onClick={() => router.push("/auth")}>
+                  Get Started
+                </Button>
               </div>
             </div>
           </div>
@@ -244,11 +337,16 @@ const Index = () => {
             </h1>
 
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Answer customer questions instantly, reduce support costs, and improve satisfaction with intelligent AI responses.
+              Answer customer questions instantly, reduce support costs, and
+              improve satisfaction with intelligent AI responses.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-                <Button size="lg" onClick={() => router.push('/auth')} className="text-lg px-8 py-6">
+              <Button
+                size="lg"
+                onClick={() => router.push("/auth")}
+                className="text-lg px-8 py-6"
+              >
                 Get Started Free
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
@@ -268,13 +366,19 @@ const Index = () => {
                   </div>
                   <div className="text-left space-y-4">
                     <div className="bg-primary/10 rounded-lg p-3 max-w-xs">
-                      <p className="text-sm">👋 Hi! How can I help you today?</p>
+                      <p className="text-sm">
+                        👋 Hi! How can I help you today?
+                      </p>
                     </div>
                     <div className="bg-muted rounded-lg p-3 max-w-xs ml-auto">
                       <p className="text-sm">What's your refund policy?</p>
                     </div>
                     <div className="bg-primary/10 rounded-lg p-3 max-w-sm">
-                      <p className="text-sm">We offer a 30-day money-back guarantee on all plans. You can request a refund anytime within 30 days of purchase, no questions asked.</p>
+                      <p className="text-sm">
+                        We offer a 30-day money-back guarantee on all plans. You
+                        can request a refund anytime within 30 days of purchase,
+                        no questions asked.
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -298,12 +402,15 @@ const Index = () => {
           </div>
         </div>
       </section>
+      <FloatingRobot />
 
       {/* How It Works */}
       <section className="py-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              How It Works
+            </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Get started in minutes with our simple three-step process
             </p>
@@ -327,7 +434,9 @@ const Index = () => {
       <section id="features" className="py-20 bg-muted/50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Powerful Features</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Powerful Features
+            </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Everything you need to provide exceptional customer support
             </p>
@@ -341,7 +450,9 @@ const Index = () => {
                   <CardTitle>{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className="text-base">{feature.description}</CardDescription>
+                  <CardDescription className="text-base">
+                    {feature.description}
+                  </CardDescription>
                 </CardContent>
               </Card>
             ))}
@@ -353,9 +464,12 @@ const Index = () => {
       <section id="demo" className="py-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">See It In Action</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              See It In Action
+            </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Try our interactive demo to see how your customers will experience instant support
+              Try our interactive demo to see how your customers will experience
+              instant support
             </p>
           </div>
 
@@ -366,16 +480,23 @@ const Index = () => {
               </div>
               <div className="space-y-4">
                 <div className="bg-primary/10 rounded-lg p-4 max-w-sm">
-                  <p className="text-sm">👋 Hello! I'm your AI assistant. Ask me anything about our service!</p>
+                  <p className="text-sm">
+                    👋 Hello! I'm your AI assistant. Ask me anything about our
+                    service!
+                  </p>
                 </div>
                 <div className="bg-muted rounded-lg p-4 max-w-sm ml-auto">
                   <p className="text-sm">How do I cancel my subscription?</p>
                 </div>
                 <div className="bg-primary/10 rounded-lg p-4 max-w-lg">
-                  <p className="text-sm">You can cancel your subscription anytime from your account settings. Go to Billing → Manage Subscription → Cancel. You'll retain access until your current billing period ends.</p>
+                  <p className="text-sm">
+                    You can cancel your subscription anytime from your account
+                    settings. Go to Billing → Manage Subscription → Cancel.
+                    You'll retain access until your current billing period ends.
+                  </p>
                 </div>
                 <div className="text-center pt-4">
-                  <Button onClick={() => router.push('/auth')}>
+                  <Button onClick={() => router.push("/auth")}>
                     Try It For Free
                   </Button>
                 </div>
@@ -389,7 +510,9 @@ const Index = () => {
       <section id="pricing" className="py-20 bg-muted/50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple, Transparent Pricing</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Simple, Transparent Pricing
+            </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Choose the plan that fits your business needs
             </p>
@@ -397,7 +520,12 @@ const Index = () => {
 
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {pricingPlans.map((plan, index) => (
-              <Card key={index} className={`relative ${plan.popular ? 'ring-2 ring-primary' : ''}`}>
+              <Card
+                key={index}
+                className={`relative ${
+                  plan.popular ? "ring-2 ring-primary" : ""
+                }`}
+              >
                 {plan.popular && (
                   <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                     Most Popular
@@ -407,9 +535,13 @@ const Index = () => {
                   <CardTitle className="text-2xl">{plan.name}</CardTitle>
                   <div className="mt-4">
                     <span className="text-4xl font-bold">{plan.price}</span>
-                    <span className="text-muted-foreground">/{plan.period}</span>
+                    <span className="text-muted-foreground">
+                      /{plan.period}
+                    </span>
                   </div>
-                  <CardDescription className="mt-2">{plan.description}</CardDescription>
+                  <CardDescription className="mt-2">
+                    {plan.description}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <ul className="space-y-3">
@@ -423,9 +555,11 @@ const Index = () => {
                   <Button
                     className="w-full"
                     variant={plan.popular ? "default" : "outline"}
-                    onClick={() => router.push('/auth')}
+                    onClick={() => router.push("/auth")}
                   >
-                    {plan.name === "Enterprise" ? "Contact Sales" : "Get Started"}
+                    {plan.name === "Enterprise"
+                      ? "Contact Sales"
+                      : "Get Started"}
                   </Button>
                 </CardContent>
               </Card>
@@ -438,7 +572,9 @@ const Index = () => {
       <section className="py-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">What Our Customers Say</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              What Our Customers Say
+            </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Join thousands of businesses improving their customer support
             </p>
@@ -450,17 +586,24 @@ const Index = () => {
                 <CardContent className="pt-6">
                   <div className="flex items-center mb-4">
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                      <Star
+                        key={i}
+                        className="h-4 w-4 fill-yellow-400 text-yellow-400"
+                      />
                     ))}
                   </div>
-                  <p className="text-muted-foreground mb-6">"{testimonial.content}"</p>
+                  <p className="text-muted-foreground mb-6">
+                    "{testimonial.content}"
+                  </p>
                   <div className="flex items-center">
                     <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-semibold mr-3">
                       {testimonial.avatar}
                     </div>
                     <div>
                       <p className="font-semibold">{testimonial.name}</p>
-                      <p className="text-sm text-muted-foreground">{testimonial.role}, {testimonial.company}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {testimonial.role}, {testimonial.company}
+                      </p>
                     </div>
                   </div>
                 </CardContent>
@@ -474,7 +617,9 @@ const Index = () => {
       <section id="faq" className="py-20 bg-muted/50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Frequently Asked Questions</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Frequently Asked Questions
+            </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Everything you need to know about our AI FAQ Assistant
             </p>
@@ -495,7 +640,7 @@ const Index = () => {
 
           <div className="text-center mt-12">
             <p className="text-muted-foreground mb-4">Still have questions?</p>
-            <Button variant="outline" onClick={() => router.push('/auth')}>
+            <Button variant="outline" onClick={() => router.push("/auth")}>
               Contact Support
             </Button>
           </div>
@@ -521,30 +666,78 @@ const Index = () => {
             <div>
               <h3 className="font-semibold mb-4">Product</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#features" className="hover:text-primary">Features</a></li>
-                <li><a href="#pricing" className="hover:text-primary">Pricing</a></li>
-                <li><a href="#demo" className="hover:text-primary">Demo</a></li>
-                <li><a href="/docs" className="hover:text-primary">Documentation</a></li>
+                <li>
+                  <a href="#features" className="hover:text-primary">
+                    Features
+                  </a>
+                </li>
+                <li>
+                  <a href="#pricing" className="hover:text-primary">
+                    Pricing
+                  </a>
+                </li>
+                <li>
+                  <a href="#demo" className="hover:text-primary">
+                    Demo
+                  </a>
+                </li>
+                <li>
+                  <a href="/docs" className="hover:text-primary">
+                    Documentation
+                  </a>
+                </li>
               </ul>
             </div>
 
             <div>
               <h3 className="font-semibold mb-4">Company</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="/about" className="hover:text-primary">About</a></li>
-                <li><a href="/blog" className="hover:text-primary">Blog</a></li>
-                <li><a href="/careers" className="hover:text-primary">Careers</a></li>
-                <li><a href="/contact" className="hover:text-primary">Contact</a></li>
+                <li>
+                  <a href="/about" className="hover:text-primary">
+                    About
+                  </a>
+                </li>
+                <li>
+                  <a href="/blog" className="hover:text-primary">
+                    Blog
+                  </a>
+                </li>
+                <li>
+                  <a href="/careers" className="hover:text-primary">
+                    Careers
+                  </a>
+                </li>
+                <li>
+                  <a href="/contact" className="hover:text-primary">
+                    Contact
+                  </a>
+                </li>
               </ul>
             </div>
 
             <div>
               <h3 className="font-semibold mb-4">Legal</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="/privacy" className="hover:text-primary">Privacy Policy</a></li>
-                <li><a href="/terms" className="hover:text-primary">Terms of Service</a></li>
-                <li><a href="/security" className="hover:text-primary">Security</a></li>
-                <li><a href="/cookies" className="hover:text-primary">Cookie Policy</a></li>
+                <li>
+                  <a href="/privacy" className="hover:text-primary">
+                    Privacy Policy
+                  </a>
+                </li>
+                <li>
+                  <a href="/terms" className="hover:text-primary">
+                    Terms of Service
+                  </a>
+                </li>
+                <li>
+                  <a href="/security" className="hover:text-primary">
+                    Security
+                  </a>
+                </li>
+                <li>
+                  <a href="/cookies" className="hover:text-primary">
+                    Cookie Policy
+                  </a>
+                </li>
               </ul>
             </div>
           </div>

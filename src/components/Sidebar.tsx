@@ -3,8 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Home, Bot, MessageSquare, BarChart3, Settings, HelpCircle,
-  CreditCard
+  Home,
+  Bot,
+  MessageSquare,
+  BarChart3,
+  Settings,
+  HelpCircle,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -34,13 +39,6 @@ const navigation = [
     name: "Settings",
     href: "/dashboard/settings",
     icon: Settings,
-    children: [
-      { name: "Profile", href: "/dashboard/settings/profile" },
-      { name: "AI Behavior", href: "/dashboard/settings/ai-behavior" },
-      { name: "Embedding", href: "/dashboard/settings/embedding" },
-      { name: "Multi-language", href: "/dashboard/settings/language" },
-      { name: "File Uploads", href: "/dashboard/settings/uploads" },
-    ],
   },
   {
     name: "Billing",
@@ -84,7 +82,7 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
             <Bot className="w-5 h-5 text-primary-foreground" />
           </div>
           {!isCollapsed && (
-            <span className="font-bold text-lg text-foreground">AI Assistant</span>
+            <span className="font-bold text-lg text-foreground">ParlAI</span>
           )}
         </div>
       </div>
@@ -100,33 +98,37 @@ const Sidebar = ({ isCollapsed }: SidebarProps) => {
                 href={item.href}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
-                  (isItemActive || hasActiveChild)
+                  isItemActive || hasActiveChild
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
                 <item.icon className="w-5 h-5 flex-shrink-0" />
-                {!isCollapsed && <span className="font-medium">{item.name}</span>}
+                {!isCollapsed && (
+                  <span className="font-medium">{item.name}</span>
+                )}
               </Link>
 
-              {!isCollapsed && item.children && (isItemActive || hasActiveChild) && (
-                <div className="ml-6 mt-2 space-y-1">
-                  {item.children.map((child) => (
-                    <Link
-                      key={child.href}
-                      href={child.href}
-                      className={cn(
-                        "block px-3 py-1 text-sm rounded transition-colors",
-                        pathname === child.href
-                          ? "text-primary bg-primary/10"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                      )}
-                    >
-                      {child.name}
-                    </Link>
-                  ))}
-                </div>
-              )}
+              {!isCollapsed &&
+                item.children &&
+                (isItemActive || hasActiveChild) && (
+                  <div className="ml-6 mt-2 space-y-1">
+                    {item.children.map((child) => (
+                      <Link
+                        key={child.href}
+                        href={child.href}
+                        className={cn(
+                          "block px-3 py-1 text-sm rounded transition-colors",
+                          pathname === child.href
+                            ? "text-primary bg-primary/10"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                        )}
+                      >
+                        {child.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
             </div>
           );
         })}

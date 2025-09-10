@@ -75,12 +75,12 @@ export default function AssistantsPage() {
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
 
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
     };
   }, [user?.id]);
 
@@ -89,10 +89,10 @@ export default function AssistantsPage() {
 
     try {
       const { data, error } = await supabase
-        .from('assistants')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .from("assistants")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       setAssistants(data || []);
@@ -100,7 +100,7 @@ export default function AssistantsPage() {
       toast({
         title: "Error",
         description: "Failed to fetch assistants",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -110,29 +110,30 @@ export default function AssistantsPage() {
   const filteredAssistants = assistants.filter(
     (assistant) =>
       assistant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (assistant.description && assistant.description.toLowerCase().includes(searchQuery.toLowerCase()))
+      (assistant.description &&
+        assistant.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const handleDeleteAssistant = async (assistantId: string) => {
-    if (!confirm('Are you sure you want to delete this assistant?')) return;
+    if (!confirm("Are you sure you want to delete this assistant?")) return;
 
     try {
       const { error } = await supabase
-        .from('assistants')
+        .from("assistants")
         .delete()
-        .eq('id', assistantId);
+        .eq("id", assistantId);
 
       if (error) throw error;
       toast({
         title: "Success",
-        description: "Assistant deleted successfully"
+        description: "Assistant deleted successfully",
       });
       fetchAssistants();
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to delete assistant",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
@@ -144,53 +145,44 @@ export default function AssistantsPage() {
   return (
     <div>
       <div className="px-4 lg:px-6 max-w-7xl mx-auto">
-        {/* Header */}
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">AI Assistants</h1>
-            <p className="text-muted-foreground mt-2">
-              Create and manage your AI assistants
-            </p>
-          </div>
-          <div className="flex gap-2 mt-4 lg:mt-0">
-            <Button
-              variant="outline"
-              onClick={() => fetchAssistants()}
-              disabled={loading}
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
-            <Button
-              className="bg-gradient-primary hover:opacity-90 shadow-glow"
-              onClick={() => router.push("/dashboard/assistants/create")}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Create Assistant
-            </Button>
-          </div>
-        </div>
+          <div className="flex gap-2 mt-4 lg:mt-0 justify-between w-full">
+            <div className="relative max-w-md flex-1">
+              <Search className="absolute flex left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search assistants..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
 
-        {/* Search */}
-        <div className="mb-6">
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search assistants..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
+            <div className="gap-3 flex">
+              <Button
+                variant="outline"
+                onClick={() => fetchAssistants()}
+                disabled={loading}
+              >
+                <RefreshCw
+                  className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
+                />
+                Refresh
+              </Button>
+              <Button
+                className="bg-gradient-primary hover:opacity-90 shadow-glow"
+                onClick={() => router.push("/dashboard/assistants/create")}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create Assistant
+              </Button>
+            </div>
           </div>
         </div>
 
         {/* Assistants Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredAssistants.map((assistant) => (
-            <Card
-              key={assistant.id}
-              className="assistant-card"
-            >
+            <Card key={assistant.id} className="assistant-card">
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start space-x-3">
@@ -202,9 +194,7 @@ export default function AssistantsPage() {
                         {assistant.name}
                       </CardTitle>
                       <Badge
-                        variant={
-                          assistant.is_active ? "default" : "secondary"
-                        }
+                        variant={assistant.is_active ? "default" : "secondary"}
                         className={
                           assistant.is_active
                             ? "bg-success text-success-foreground"
@@ -224,7 +214,9 @@ export default function AssistantsPage() {
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
                         onClick={() =>
-                          router.push(`/dashboard/assistants/${assistant.id}/chat`)
+                          router.push(
+                            `/dashboard/assistants/${assistant.id}/chat`
+                          )
                         }
                       >
                         <Play className="w-4 h-4 mr-2" />
@@ -232,7 +224,9 @@ export default function AssistantsPage() {
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() =>
-                          router.push(`/dashboard/assistants/${assistant.id}/edit`)
+                          router.push(
+                            `/dashboard/assistants/${assistant.id}/edit`
+                          )
                         }
                       >
                         <Edit className="w-4 h-4 mr-2" />
@@ -270,9 +264,11 @@ export default function AssistantsPage() {
                     <MessageSquare className="w-4 h-4 mr-1" />
                     {assistant.total_chats || 0} chats
                   </div>
-                  <div>Created: {new Date(assistant.created_at).toLocaleDateString()}</div>
+                  <div>
+                    Created:{" "}
+                    {new Date(assistant.created_at).toLocaleDateString()}
+                  </div>
                 </div>
-
 
                 {/* Actions */}
                 <div className="flex space-x-2">
@@ -308,7 +304,9 @@ export default function AssistantsPage() {
           <Card className="bg-gradient-card border-0 shadow-dashboard-md">
             <CardContent className="flex flex-col items-center justify-center py-12">
               <Bot className="w-16 h-16 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No assistants found</h3>
+              <h3 className="text-lg font-semibold mb-2">
+                No assistants found
+              </h3>
               <p className="text-muted-foreground text-center mb-6">
                 {searchQuery
                   ? "Try adjusting your search terms"

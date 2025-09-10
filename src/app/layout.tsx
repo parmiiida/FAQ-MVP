@@ -1,36 +1,22 @@
 // app/layout.tsx
 import { Providers } from "@/components/Providers";
-import "./globals.css"; // your global styles
+import "./globals.css";
+import FloatingRobot from "@/components/homepage/FloatingRobot";
 
 export const metadata = {
   title: "ParlAI",
-  description: "your AI assistant any every level",
+  description: "Your AI assistant at every level",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en">
-      <body suppressHydrationWarning={true}>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(() => {
-  try {
-    const stored = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const theme = stored || (prefersDark ? 'dark' : 'light');
-    const root = document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-  } catch (_) {}
-})();`,
-          }}
-        />
-        <Providers>
-          {children}
-        </Providers>
+    <html lang="en" suppressHydrationWarning>
+      <body>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
